@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"golang.org/x/text/language"
 	"google.golang.org/api/option"
 	gtts "cloud.google.com/go/texttospeech/apiv1"
 	pb "cloud.google.com/go/texttospeech/apiv1/texttospeechpb"
@@ -18,7 +19,10 @@ type Google struct {
 	// CustomVoice
 }
 
-func NewGoogle(lang, name string) *Google {
+func NewGoogle(l, name string) *Google {
+	ltag, _ := language.Parse(l)
+	lang := ltag.String()
+
 	return &Google{
 		Lang: lang,
 		Name: name,
@@ -41,18 +45,12 @@ func (g *Google) Close() {
 	g.c.Close()
 }
 
-func (g *Google) SayAnything(text string) error {
+func (g *Google) Speech(text string) ([]byte, error) {
 	if g.c == nil {
-		return errors.New("no Google TTS client")
+		return nil, errors.New("no Google TTS client")
 	}
 
-	data, err := g.speech(text)
-	if err != nil {
-		println(err)
-		return err
-	}
-	
-	return g.say(data)
+	return g.speech(text)
 }
 
 func (g *Google) speech(text string) ([]byte, error) {
@@ -83,10 +81,4 @@ func (g *Google) speech(text string) ([]byte, error) {
 	}
 	
 	return resp.AudioContent, nil
-}
-
-func (g *Google) say(data []byte) error {
-	println("data len", len(data))
-
-	return nil
 }
