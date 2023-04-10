@@ -8,6 +8,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 
+	"github.com/hybridgroup/go-sayanything/pkg/say"
 	"github.com/hybridgroup/go-sayanything/pkg/tts"
 )
 
@@ -32,7 +33,7 @@ func RunCLI(version string) error {
 			&cli.StringFlag{
 				Name:    "lang",
 				Usage:   "language of the text",
-				Value:   "en",
+				Value:   "en-us",
 				Aliases: []string{"l"},
 			},
 			&cli.StringFlag{
@@ -75,11 +76,14 @@ func RunCLI(version string) error {
 
 			defer t.Close()
 
+			p := say.NewPlayer()
+			defer p.Close()
+		
 			// input piped to stdin
 			if isPiped() {
 				scanner := bufio.NewScanner(os.Stdin)
 				for scanner.Scan() {
-					err := t.SayAnything(scanner.Text())
+					err := SayAnything(t, p, scanner.Text())
 					if err != nil {
 						return cli.Exit(err, 1)
 					}
@@ -91,7 +95,7 @@ func RunCLI(version string) error {
 				return nil
 			}
 
-			return t.SayAnything(text)
+			return SayAnything(t, p, text)
 		},
 	}
 
@@ -99,6 +103,15 @@ func RunCLI(version string) error {
 		return cli.Exit(err, 1)
 	}
 	return nil
+}
+
+func SayAnything(t *tts.Google, p *say.Player, text string) error {
+	data, err := t.Speech(text)
+	if err != nil {
+		return err
+	}
+
+	return p.Say(data)
 }
 
 func isPiped() bool {
