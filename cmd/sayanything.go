@@ -26,7 +26,7 @@ func RunCLI(version string) error {
 		UsageText: "sayanything <TEXT_TO_SAY>\n   echo \"TEXT_TO_SAY\" | sayanything",
 		Authors: []*cli.Author{
 			{
-				Name:  "deadprogram",
+				Name: "deadprogram",
 			},
 		},
 		Flags: []cli.Flag{
@@ -37,9 +37,9 @@ func RunCLI(version string) error {
 				Aliases: []string{"l"},
 			},
 			&cli.StringFlag{
-				Name:    "voice",
-				Usage:   "voice to use to speak",
-				Value:   "",
+				Name:  "voice",
+				Usage: "voice to use to speak",
+				Value: "",
 			},
 			&cli.StringFlag{
 				Name:    "keys",
@@ -78,7 +78,7 @@ func RunCLI(version string) error {
 
 			p := say.NewPlayer()
 			defer p.Close()
-		
+
 			// input piped to stdin
 			if isPiped() {
 				scanner := bufio.NewScanner(os.Stdin)
@@ -106,6 +106,10 @@ func RunCLI(version string) error {
 }
 
 func SayAnything(t *tts.Google, p *say.Player, text string) error {
+	if len(text) == 0 {
+		return nil
+	}
+
 	data, err := t.Speech(text)
 	if err != nil {
 		return err

@@ -21,6 +21,10 @@ func (p *Player) Close() {
 }
 
 func (p *Player) Say(b []byte) error {
+	if len(b) == 0 {
+		return nil
+	}
+
 	dec, data, err := minimp3.DecodeFull(b)
 	if err != nil {
 		return err
