@@ -21,7 +21,7 @@ var (
 func RunCLI(version string) error {
 	app := &cli.App{
 		Name:      "sayanything",
-		Usage:     "play a google tts audio from the input text",
+		Usage:     "play text to speech audio from the input text",
 		Version:   version,
 		UsageText: "sayanything <TEXT_TO_SAY>\n   echo \"TEXT_TO_SAY\" | sayanything",
 		Authors: []*cli.Author{
@@ -47,10 +47,14 @@ func RunCLI(version string) error {
 				Value:   "",
 				Aliases: []string{"k"},
 			},
-			&cli.BoolFlag{
-				Name:    "slow",
-				Usage:   "play audio slower",
-				Aliases: []string{"s"},
+			&cli.StringFlag{
+				Name:    "engine",
+				Usage:   "TTS engine to use (google, piper)",
+				Aliases: []string{"e"},
+			},
+			&cli.StringFlag{
+				Name:  "data",
+				Usage: "data directory for the TTS engine",
 			},
 		},
 		Before: func(c *cli.Context) error {
@@ -61,22 +65,36 @@ func RunCLI(version string) error {
 		},
 		Action: func(c *cli.Context) error {
 			text := strings.Join(c.Args().Slice(), " ")
-			//slow := c.Bool("slow")
 			lang := c.String("lang")
 			voice := c.String("voice")
 			keys := c.String("keys")
-			if keys == "" {
-				return cli.Exit(errors.New("keyfile required. use -k=/path/to/keys.json"), 1)
-			}
 
-			t := tts.NewGoogle(lang, voice)
-			if err := t.Connect(keys); err != nil {
-				return cli.Exit(err, 1)
+			var t tts.Speaker
+			var format string
+			switch c.String("engine") {
+			case "piper":
+				t = tts.NewPiper(lang, voice)
+				if err := t.Connect(c.String("data")); err != nil {
+					return cli.Exit(err, 1)
+				}
+				format = "wav"
+			case "google":
+				if keys == "" {
+					return cli.Exit(errors.New("keyfile required. use -k=/path/to/keys.json"), 1)
+				}
+
+				t = tts.NewGoogle(lang, voice)
+				if err := t.Connect(keys); err != nil {
+					return cli.Exit(err, 1)
+				}
+				format = "mp3"
+			default:
+				return cli.Exit(errors.New("unsupported engine"), 1)
 			}
 
 			defer t.Close()
 
-			p := say.NewPlayer()
+			p := say.NewPlayer(format)
 			defer p.Close()
 
 			// input piped to stdin
@@ -105,7 +123,7 @@ func RunCLI(version string) error {
 	return nil
 }
 
-func SayAnything(t *tts.Google, p *say.Player, text string) error {
+func SayAnything(t tts.Speaker, p *say.Player, text string) error {
 	if len(text) == 0 {
 		return nil
 	}
