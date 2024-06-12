@@ -56,6 +56,10 @@ func RunCLI(version string) error {
 				Name:  "data",
 				Usage: "data directory for the TTS engine",
 			},
+			&cli.BoolFlag{
+				Name:  "gpu",
+				Usage: "use GPU for TTS engine",
+			},
 		},
 		Before: func(c *cli.Context) error {
 			if c.NArg() == 0 && !isPiped() {
@@ -76,6 +80,9 @@ func RunCLI(version string) error {
 				t = tts.NewPiper(lang, voice)
 				if err := t.Connect(c.String("data")); err != nil {
 					return cli.Exit(err, 1)
+				}
+				if c.Bool("gpu") {
+					t.(*tts.Piper).UseGPU(true)
 				}
 				format = "wav"
 			case "google":

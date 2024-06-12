@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	cloud.google.com/go/texttospeech v1.6.0
+	github.com/go-audio/wav v1.1.0
 	github.com/hajimehoshi/oto v1.0.1
 	github.com/tosone/minimp3 v1.0.1
 	github.com/urfave/cli/v2 v2.25.1
@@ -17,6 +18,8 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.1 // indirect
 	cloud.google.com/go/longrunning v0.3.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/go-audio/audio v1.0.0 // indirect
+	github.com/go-audio/riff v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect

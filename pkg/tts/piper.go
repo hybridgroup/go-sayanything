@@ -14,6 +14,7 @@ type Piper struct {
 	Name string
 
 	datadir string
+	gpu     bool
 }
 
 func NewPiper(l, name string) *Piper {
@@ -31,6 +32,10 @@ func (p *Piper) Connect(datadir string) error {
 	return nil
 }
 
+func (p *Piper) UseGPU(gpu bool) {
+	p.gpu = gpu
+}
+
 func (p *Piper) Close() {
 }
 
@@ -42,7 +47,13 @@ func (p *Piper) Speech(text string) ([]byte, error) {
 	input := bytes.NewBufferString(text)
 	var stdout, stderr bytes.Buffer
 
-	cmd := exec.Command("piper", "--model", modelpath, "--output-raw", "--cuda")
+	cmds := []string{"--model", modelpath}
+	if p.gpu {
+		cmds = append(cmds, "--use-cuda")
+	}
+	cmds = append(cmds, []string{"--output-file", "-"}...)
+
+	cmd := exec.Command("piper", cmds...)
 	cmd.Stdin = input
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

@@ -1,8 +1,10 @@
 package say
 
 import (
+	"bytes"
 	"errors"
 
+	"github.com/go-audio/wav"
 	"github.com/hajimehoshi/oto"
 	"github.com/tosone/minimp3"
 )
@@ -47,7 +49,7 @@ func (p *Player) sayMP3(b []byte) error {
 	}
 
 	if p.player == nil {
-		player, _ := oto.NewContext(dec.SampleRate, dec.Channels, 2, 1024)
+		player, _ := oto.NewContext(dec.SampleRate, dec.Channels, 2, 8192)
 		p.player = player.NewPlayer()
 	}
 
@@ -56,11 +58,22 @@ func (p *Player) sayMP3(b []byte) error {
 }
 
 func (p *Player) sayWAV(b []byte) error {
+	buf := bytes.NewReader(b)
+	wv := wav.NewDecoder(buf)
+	if wv == nil {
+		return errors.New("failed to create wav decoder")
+	}
+
+	wv.ReadInfo()
+	if wv.SampleRate == 0 {
+		return errors.New("failed to read wav info")
+	}
+
 	if p.player == nil {
-		player, _ := oto.NewContext(22050, 1, 2, 4096)
+		player, _ := oto.NewContext(int(wv.SampleRate), int(wv.NumChans), 2, 8192)
 		p.player = player.NewPlayer()
 	}
 
-	_, err := p.player.Write(b)
-	return err
+	_, e := p.player.Write(b)
+	return e
 }
