@@ -49,7 +49,7 @@ func RunCLI(version string) error {
 			},
 			&cli.StringFlag{
 				Name:    "engine",
-				Usage:   "TTS engine to use (google, piper)",
+				Usage:   "TTS engine to use (google, piper, sam)",
 				Aliases: []string{"e"},
 			},
 			&cli.StringFlag{
@@ -101,6 +101,9 @@ func RunCLI(version string) error {
 					return cli.Exit(err, 1)
 				}
 				format = "mp3"
+			case "sam":
+				t = tts.NewSam()
+				format = "wav"
 			default:
 				return cli.Exit(errors.New("unsupported engine"), 1)
 			}
@@ -121,7 +124,7 @@ func RunCLI(version string) error {
 						say = tts.RemoveExtraStrings(say, strips)
 					}
 
-					err := SayAnything(t, p, say)
+					err := sayAnything(t, p, say)
 					if err != nil {
 						return cli.Exit(err, 1)
 					}
@@ -142,7 +145,7 @@ func RunCLI(version string) error {
 			}
 
 			say = tts.RemoveEmoji(say)
-			return SayAnything(t, p, say)
+			return sayAnything(t, p, say)
 		},
 	}
 
@@ -152,7 +155,9 @@ func RunCLI(version string) error {
 	return nil
 }
 
-func SayAnything(t tts.Speaker, p *say.Player, text string) error {
+// sayAnything converts the input text to speech using the provided tts.Speaker and plays it using the provided say.Player.
+// It returns an error if any step of the process fails.
+func sayAnything(t tts.Speaker, p *say.Player, text string) error {
 	if len(text) == 0 {
 		return nil
 	}
