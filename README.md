@@ -16,19 +16,25 @@ It also supports the following cloud based TTS engines:
 ## How to build
 
 ```
-go build -o sayanything .
+go install ./cmd/sayanything
 ```
 
 ## How to run
 
 ### Piper
 
+```
+sayanything --engine piper --voice hfc_female-medium --lang en_US --data ~/voices/ "hello friends"
+```
 
 ### SAM
 
+```
+sayanything --engine sam "hello friends"
+```
 
 ### Google Cloud TTS
 
 ```
-./sayanything -k="/path/to/key.json" -l="es-ES" -voice="es-ES-Neural2-E" "¡Hola amigo! ¿Cómo estás?"
+sayanything -k="/path/to/key.json" -l="es-ES" -voice="es-ES-Neural2-E" "¡Hola amigo! ¿Cómo estás?"
 ```
