@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+// Speaker defines the interface for text-to-speech engines. It includes methods for connecting
+// to any necessary resources, closing those resources, and converting text to speech data.
 type Speaker interface {
 	Connect(string) error
 	Close()

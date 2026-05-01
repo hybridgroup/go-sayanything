@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 
+	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
 	"github.com/hajimehoshi/oto"
 	"github.com/tosone/minimp3"
@@ -58,22 +59,64 @@ func (p *Player) sayMP3(b []byte) error {
 }
 
 func (p *Player) sayWAV(b []byte) error {
-	buf := bytes.NewReader(b)
-	wv := wav.NewDecoder(buf)
-	if wv == nil {
+	dec := wav.NewDecoder(bytes.NewReader(b))
+	if dec == nil {
 		return errors.New("failed to create wav decoder")
 	}
 
-	wv.ReadInfo()
-	if wv.SampleRate == 0 {
+	dec.ReadInfo()
+	if dec.SampleRate == 0 {
 		return errors.New("failed to read wav info")
 	}
 
-	if p.player == nil {
-		player, _ := oto.NewContext(int(wv.SampleRate), int(wv.NumChans), 2, 8192)
-		p.player = player.NewPlayer()
+	bytesPerSample := int(dec.BitDepth) / 8
+	if bytesPerSample < 1 {
+		bytesPerSample = 1
 	}
 
-	_, e := p.player.Write(b)
-	return e
+	if p.player == nil {
+		ctx, err := oto.NewContext(int(dec.SampleRate), int(dec.NumChans), bytesPerSample, 8192)
+		if err != nil {
+			return err
+		}
+		p.player = ctx.NewPlayer()
+	}
+
+	pcmBuf := &audio.IntBuffer{
+		Format: &audio.Format{
+			SampleRate:  int(dec.SampleRate),
+			NumChannels: int(dec.NumChans),
+		},
+		Data: make([]int, 4096),
+	}
+
+	raw := make([]byte, 4096*bytesPerSample)
+	for {
+		n, err := dec.PCMBuffer(pcmBuf)
+		if n == 0 {
+			break
+		}
+
+		out := raw[:n*bytesPerSample]
+		for i := 0; i < n; i++ {
+			v := pcmBuf.Data[i]
+			switch bytesPerSample {
+			case 1:
+				out[i] = byte(v)
+			case 2:
+				out[i*2] = byte(v)
+				out[i*2+1] = byte(v >> 8)
+			}
+		}
+
+		if _, werr := p.player.Write(out); werr != nil {
+			return werr
+		}
+
+		if err != nil { // io.EOF after last chunk
+			break
+		}
+	}
+
+	return nil
 }
