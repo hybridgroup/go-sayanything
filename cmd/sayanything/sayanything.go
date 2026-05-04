@@ -145,7 +145,11 @@ func RunCLI(version string) error {
 			}
 
 			say = tts.RemoveEmoji(say)
-			return sayAnything(t, p, say)
+			if err := sayAnything(t, p, say); err != nil {
+				return err
+			}
+			p.Drain()
+			return nil
 		},
 	}
 
