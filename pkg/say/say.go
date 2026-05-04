@@ -3,7 +3,6 @@ package say
 import (
 	"bytes"
 	"errors"
-	"io"
 	"time"
 
 	"github.com/ebitengine/oto/v3"
@@ -64,24 +63,19 @@ func (p *Player) ensureContext(sampleRate, channelCount int, format oto.Format) 
 }
 
 // playPCM sends raw PCM bytes to the audio device and blocks until done.
-//
-// IsPlaying() returns false when oto's internal software buffer is empty, but
-// the ALSA ring buffer and PulseAudio still hold ~400 ms of audio at that
-// point.  We pad the stream with 500 ms of silence so that IsPlaying() only
-// becomes false after all real audio has cleared every hardware stage.
 func (p *Player) playPCM(pcm []byte) {
-	// bytesPerSample for the current format (always int16 after our conversion)
-	bytesPerSample := 2                                              // FormatSignedInt16LE
-	silenceLen := p.sampleRate * p.channelCount * bytesPerSample / 2 // 500 ms
-	silence := make([]byte, silenceLen)
-	src := io.MultiReader(bytes.NewReader(pcm), bytes.NewReader(silence))
-
-	player := p.ctx.NewPlayer(src)
-	defer player.Close()
+	player := p.ctx.NewPlayer(bytes.NewReader(pcm))
 	player.Play()
 	for player.IsPlaying() {
 		time.Sleep(time.Millisecond)
 	}
+}
+
+// Drain waits for the hardware audio buffer to finish outputting the last
+// played audio. Call this once after the final phrase when not running as a
+// server, so the process does not exit before the hardware buffer is empty.
+func (p *Player) Drain() {
+	time.Sleep(100 * time.Millisecond)
 }
 
 func (p *Player) sayMP3(b []byte) error {
