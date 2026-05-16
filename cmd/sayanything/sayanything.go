@@ -65,6 +65,26 @@ func RunCLI(version string) error {
 				Usage:   "characters to strip before speaking",
 				Aliases: []string{"s"},
 			},
+			&cli.IntFlag{
+				Name:  "mouth",
+				Usage: "SAM mouth value (0-255)",
+				Value: -1,
+			},
+			&cli.IntFlag{
+				Name:  "throat",
+				Usage: "SAM throat value (0-255)",
+				Value: -1,
+			},
+			&cli.IntFlag{
+				Name:  "pitch",
+				Usage: "SAM pitch value (0-255)",
+				Value: -1,
+			},
+			&cli.IntFlag{
+				Name:  "speed",
+				Usage: "SAM speed value (0-255)",
+				Value: -1,
+			},
 		},
 		Before: func(c *cli.Context) error {
 			if c.NArg() == 0 && !isPiped() {
@@ -102,7 +122,20 @@ func RunCLI(version string) error {
 				}
 				format = "mp3"
 			case "sam":
-				t = tts.NewSam()
+				samSpeaker := tts.NewSam()
+				if v := c.Int("mouth"); v >= 0 {
+					samSpeaker.SetMouth(byte(v))
+				}
+				if v := c.Int("throat"); v >= 0 {
+					samSpeaker.SetThroat(byte(v))
+				}
+				if v := c.Int("pitch"); v >= 0 {
+					samSpeaker.SetPitch(byte(v))
+				}
+				if v := c.Int("speed"); v >= 0 {
+					samSpeaker.SetSpeed(byte(v))
+				}
+				t = samSpeaker
 				format = "wav"
 			default:
 				return cli.Exit(errors.New("unsupported engine"), 1)

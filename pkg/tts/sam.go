@@ -29,6 +29,18 @@ func (s *Sam) Connect(_ string) error { return nil }
 // Close is a no-op for SAM; it satisfies the Speaker interface.
 func (s *Sam) Close() {}
 
+// SetMouth sets the mouth parameter (0–255).
+func (s *Sam) SetMouth(v byte) { s.cfg.SetMouth(v) }
+
+// SetThroat sets the throat parameter (0–255).
+func (s *Sam) SetThroat(v byte) { s.cfg.SetThroat(v) }
+
+// SetPitch sets the pitch parameter (0–255).
+func (s *Sam) SetPitch(v byte) { s.cfg.SetPitch(v) }
+
+// SetSpeed sets the speed parameter (0–255).
+func (s *Sam) SetSpeed(v byte) { s.cfg.SetSpeed(v) }
+
 // Speech converts text to 8-bit 22050 Hz mono PCM wrapped in a WAV container.
 func (s *Sam) Speech(text string) ([]byte, error) {
 	text = strings.ToUpper(strings.TrimSpace(text))
